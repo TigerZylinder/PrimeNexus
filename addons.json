@@ -1,0 +1,26 @@
+[
+  {
+    "id": "addon-iptv-de",
+    "name": "Öffentlich-Rechtliche TV-Sender (Deutschland)",
+    "description": "ARD, ZDF, 3sat, KiKa, Phoenix, Arte, Tagesschau24, WDR, BR, NDR u.v.m.",
+    "url": "https://iptv-org.github.io/iptv/countries/de.m3u",
+    "type": "m3u",
+    "language": "de",
+    "enabled": true,
+    "category": "news",
+    "author": "iptv-org Community",
+    "badge": "M3U LIVE"
+  },
+  {
+    "id": "addon-iptv-hu",
+    "name": "Magyar Szabadon Fogható Csatornák (HLS)",
+    "description": "Duna TV, M1, M2, M4 Sport, M5, HírTV és regionális magyar adások.",
+    "url": "https://iptv-org.github.io/iptv/countries/hu.m3u",
+    "type": "m3u",
+    "language": "hu",
+    "enabled": true,
+    "category": "news",
+    "author": "iptv-org Community",
+    "badge": "M3U LIVE"
+  }
+]

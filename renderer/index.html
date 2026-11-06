@@ -1,0 +1,585 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>PrimeNexus Media Player</title>
+  <link rel="stylesheet" href="styles.css">
+  <script src="vendor/hls.min.js"></script>
+</head>
+<body>
+  <!-- Windows Titlebar -->
+  <header class="titlebar">
+    <div class="titlebar-drag">
+      <div class="app-logo">
+        <svg viewBox="0 0 24 24" class="logo-icon">
+          <circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="2" fill="none" />
+          <polygon points="10 8 16 12 10 16 10 8" fill="currentColor" />
+        </svg>
+        <span class="app-name">PRIME<strong>NEXUS</strong></span>
+      </div>
+    </div>
+    <div class="titlebar-controls">
+      <button class="win-btn" id="btn-win-min" title="Minimieren">
+        <svg viewBox="0 0 10 10"><line x1="0" y1="5" x2="10" y2="5" stroke="currentColor" stroke-width="1"/></svg>
+      </button>
+      <button class="win-btn" id="btn-win-max" title="Maximieren">
+        <svg viewBox="0 0 10 10"><rect x="1.5" y="1.5" width="7" height="7" stroke="currentColor" stroke-width="1" fill="none"/></svg>
+      </button>
+      <button class="win-btn win-btn-close" id="btn-win-close" title="Schließen">
+        <svg viewBox="0 0 10 10"><line x1="1" y1="1" x2="9" y2="9" stroke="currentColor" stroke-width="1.2"/><line x1="9" y1="1" x2="1" y2="9" stroke="currentColor" stroke-width="1.2"/></svg>
+      </button>
+    </div>
+  </header>
+
+  <!-- Main App Shell -->
+  <div class="app-container">
+    
+    <!-- CATALOG VIEW (Prime Video Style) -->
+    <main id="catalog-view" class="catalog-view">
+      
+      <!-- Prime Video Top Navigation Bar -->
+      <nav class="prime-nav">
+        <div class="nav-left">
+          <div class="nav-brand">
+            <span class="prime-label">prime</span><span class="video-label">video</span>
+          </div>
+          <div class="nav-links">
+            <button class="nav-link active" data-tab="all" data-i18n="navHome">Startseite</button>
+            <button class="nav-link" data-tab="movies" data-i18n="navMovies">Filme</button>
+            <button class="nav-link" data-tab="series" data-i18n="navSeries">Serien</button>
+            <button class="nav-link" data-tab="livetv" data-i18n="navLiveTv">Live TV</button>
+          </div>
+        </div>
+
+        <div class="nav-right">
+          <div class="prime-search-box">
+            <svg class="search-icon" viewBox="0 0 24 24">
+              <circle cx="11" cy="11" r="7" stroke="currentColor" stroke-width="2" fill="none"/>
+              <line x1="16" y1="16" x2="21" y2="21" stroke="currentColor" stroke-width="2"/>
+            </svg>
+            <input type="text" id="search-input" data-i18n-placeholder="searchPlaceholder" placeholder="Filme, Serien, Live TV durchsuchen...">
+          </div>
+
+          <button class="btn btn-secondary btn-lang" id="btn-lang-toggle">🇩🇪 Deutsch</button>
+          <button class="btn btn-secondary btn-tv-guide" id="btn-open-epg" title="Elektronischer Programmführer">
+            <svg viewBox="0 0 24 24" class="btn-icon">
+              <rect x="3" y="4" width="18" height="18" rx="2" stroke="currentColor" stroke-width="2" fill="none"/>
+              <line x1="16" y1="2" x2="16" y2="6" stroke="currentColor" stroke-width="2"/>
+              <line x1="8" y1="2" x2="8" y2="6" stroke="currentColor" stroke-width="2"/>
+              <line x1="3" y1="10" x2="21" y2="10" stroke="currentColor" stroke-width="2"/>
+            </svg>
+            <span data-i18n="tvGuide">TV-Programm</span>
+          </button>
+          <button class="btn btn-primary btn-addons" id="btn-manage-addons">
+            <svg viewBox="0 0 24 24" class="btn-icon">
+              <path d="M4 6h16M4 12h16M4 18h7" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+            </svg>
+            <span data-i18n="navAddons">Bibliotheken & Add-ons</span>
+          </button>
+          <button class="btn btn-secondary btn-manage" id="btn-manage-sources" title="Manuelle Einzeleinträge">
+            <svg viewBox="0 0 24 24" class="btn-icon"><path d="M12 4v16m8-8H4" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+            <span data-i18n="manageSources">Quellen</span>
+          </button>
+        </div>
+      </nav>
+
+      <!-- Language Filter Pills -->
+      <div class="sub-nav-bar">
+        <div class="lang-pills">
+          <button class="lang-pill active" data-lang="all" data-i18n="filterAll">Alle Sprachen</button>
+          <button class="lang-pill" data-lang="de" data-i18n="filterDe">Deutsch</button>
+          <button class="lang-pill" data-lang="hu" data-i18n="filterHu">Magyar</button>
+          <button class="lang-pill" data-lang="multi" data-i18n="filterMulti">International</button>
+        </div>
+        <span id="sources-count-badge" class="count-badge">9 Titel</span>
+      </div>
+
+      <!-- Prime Video Hero Billboard (Spotlight) -->
+      <section id="hero-showcase" class="hero-showcase">
+        <div class="hero-backdrop" id="hero-backdrop"></div>
+        <div class="hero-overlay-gradient"></div>
+        <div class="hero-content">
+          <div class="hero-badges">
+            <span class="hero-badge prime-tag" data-i18n="primeBadge">PRIME EXKLUSIV</span>
+            <span class="hero-badge rating-tag">★ <span id="hero-rating">8.8</span></span>
+            <span class="hero-badge quality-tag">4K UHD</span>
+            <span class="hero-badge audio-tag">Audio: DE • HU</span>
+          </div>
+          <h1 class="hero-title" id="hero-title">Pioneers of Space</h1>
+          <p class="hero-desc" id="hero-desc">Epische Science-Fiction-Serie über die ersten bemannten Missionen zu den äußeren Zonen der Galaxie.</p>
+          <div class="hero-actions">
+            <button class="btn btn-primary btn-hero-play" id="btn-hero-play">
+              <svg viewBox="0 0 24 24" class="btn-icon"><polygon points="6 4 19 12 6 20 6 4" fill="currentColor"/></svg>
+              <span data-i18n="playNow">Jetzt ansehen</span>
+            </button>
+            <button class="btn btn-secondary btn-hero-details" id="btn-hero-details">
+              <svg viewBox="0 0 24 24" class="btn-icon"><circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="2" fill="none"/><line x1="12" y1="16" x2="12" y2="12" stroke="currentColor" stroke-width="2"/><line x1="12" y1="8" x2="12.01" y2="8" stroke="currentColor" stroke-width="2"/></svg>
+              <span id="hero-details-text" data-i18n="viewEpisodes">Staffeln & Episoden</span>
+            </button>
+          </div>
+        </div>
+      </section>
+
+      <!-- PRIME CONTENT RAILS (Horizontal Carousels) -->
+      <div id="prime-rails-container" class="prime-rails-container">
+        
+        <!-- Rail 1: Series -->
+        <section class="prime-rail-section" id="rail-series-section">
+          <div class="rail-header">
+            <h2 class="rail-title" data-i18n="rowSeries">Spannende Serien & Staffeln</h2>
+          </div>
+          <div class="rail-scroll-wrapper">
+            <button class="rail-nav-btn rail-nav-prev" data-target="rail-series">‹</button>
+            <div class="rail-cards-track" id="rail-series"></div>
+            <button class="rail-nav-btn rail-nav-next" data-target="rail-series">›</button>
+          </div>
+        </section>
+
+        <!-- Rail 2: Movies -->
+        <section class="prime-rail-section" id="rail-movies-section">
+          <div class="rail-header">
+            <h2 class="rail-title" data-i18n="rowMovies">Spielfilme & Gemeinfreie Klassiker</h2>
+          </div>
+          <div class="rail-scroll-wrapper">
+            <button class="rail-nav-btn rail-nav-prev" data-target="rail-movies">‹</button>
+            <div class="rail-cards-track" id="rail-movies"></div>
+            <button class="rail-nav-btn rail-nav-next" data-target="rail-movies">›</button>
+          </div>
+        </section>
+
+        <!-- Rail 3: Live TV -->
+        <section class="prime-rail-section" id="rail-livetv-section">
+          <div class="rail-header">
+            <h2 class="rail-title" data-i18n="rowLive">Live TV & 24/7 Nachrichtensender</h2>
+          </div>
+          <div class="rail-scroll-wrapper">
+            <button class="rail-nav-btn rail-nav-prev" data-target="rail-livetv">‹</button>
+            <div class="rail-cards-track" id="rail-livetv"></div>
+            <button class="rail-nav-btn rail-nav-next" data-target="rail-livetv">›</button>
+          </div>
+        </section>
+
+        <!-- Rail 4: Animation & Highlights -->
+        <section class="prime-rail-section" id="rail-animation-section">
+          <div class="rail-header">
+            <h2 class="rail-title" data-i18n="rowAnimation">Animation & Open-Source-Highlights</h2>
+          </div>
+          <div class="rail-scroll-wrapper">
+            <button class="rail-nav-btn rail-nav-prev" data-target="rail-animation">‹</button>
+            <div class="rail-cards-track" id="rail-animation"></div>
+            <button class="rail-nav-btn rail-nav-next" data-target="rail-animation">›</button>
+          </div>
+        </section>
+
+      </div>
+
+      <!-- Search / Filter Results Grid (when searching) -->
+      <section id="search-results-section" class="search-results-section" style="display: none;">
+        <h2 class="search-results-title">Suchergebnisse</h2>
+        <div id="search-grid" class="search-grid"></div>
+        <div id="empty-notice" class="empty-state" style="display: none;">
+          <p data-i18n="emptyCatalog">Keine Inhalte gefunden, die den Kriterien entsprechen.</p>
+        </div>
+      </section>
+
+      <!-- Footer -->
+      <footer class="app-footer">
+        <p data-i18n="legalNotice">PrimeNexus: Native Windows Media Engine für freie, legale HLS- und MP4-Streams ohne Browser-Overhead.</p>
+      </footer>
+    </main>
+
+    <!-- PLAYER VIEW (Prime-Style Embedded Video Player) -->
+    <main id="player-view" class="player-view" style="display: none;">
+      <div id="video-container" class="video-container">
+        <video id="main-video" playsinline></video>
+
+        <!-- Top Player Overlay (Header & Back Button) -->
+        <div class="player-top-overlay">
+          <button id="btn-back-to-catalog" class="btn-player-back" title="Zurück">
+            <svg viewBox="0 0 24 24"><polyline points="15 18 9 12 15 6" stroke="currentColor" stroke-width="2.5" fill="none"/></svg>
+            <span data-i18n="backToCatalog">Zurück zur Übersicht</span>
+          </button>
+          <div class="player-title-box">
+            <div class="player-meta-box">
+              <span id="player-overlay-category" class="player-meta-cat"></span>
+              <span id="player-overlay-title" class="player-title"></span>
+              <span id="player-overlay-subtitle" class="player-subtitle" style="display: none;"></span>
+            </div>
+            <span id="player-live-badge" class="badge badge-live-player" style="display: none;">LIVE</span>
+          </div>
+        </div>
+
+        <!-- Center Loading Indicator -->
+        <div id="player-spinner" class="player-spinner-overlay" style="display: none;">
+          <div class="spinner"></div>
+          <span id="player-spinner-text" data-i18n="loadingStream">Stream wird geladen...</span>
+        </div>
+
+        <!-- Center Error Overlay -->
+        <div id="player-error" class="player-error-overlay" style="display: none;">
+          <svg viewBox="0 0 24 24" class="error-icon"><circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="2" fill="none"/><line x1="12" y1="8" x2="12" y2="12" stroke="currentColor" stroke-width="2"/><circle cx="12" cy="16" r="1" fill="currentColor"/></svg>
+          <p id="player-error-desc" data-i18n="streamError">Stream konnte nicht geladen werden.</p>
+          <button id="btn-retry-stream" class="btn btn-primary" data-i18n="reloadStream">Erneut versuchen</button>
+        </div>
+
+        <!-- Audio & Subtitles Popup Menu -->
+        <div id="audio-sub-menu" class="audio-sub-menu">
+          <div class="menu-col">
+            <h4 data-i18n="audioTrack">Audiospur</h4>
+            <div id="audio-tracks-list" class="menu-track-list"></div>
+          </div>
+          <div class="menu-divider"></div>
+          <div class="menu-col">
+            <h4 data-i18n="subtitles">Untertitel</h4>
+            <div id="subtitle-tracks-list" class="menu-track-list"></div>
+          </div>
+        </div>
+
+        <!-- Live TV Channel Quick-Zapper Drawer -->
+        <div id="player-live-drawer" class="player-live-drawer">
+          <div class="drawer-header">
+            <div>
+              <h3 data-i18n="channelZapperTitle">TV-Sender & Live-Programm</h3>
+              <p class="drawer-subtitle" data-i18n="nowOnAir">Jetzt auf Sendung</p>
+            </div>
+            <button id="btn-close-live-drawer" class="modal-close-btn">&times;</button>
+          </div>
+          <div class="drawer-lang-filter">
+            <button class="drawer-pill active" data-drawer-lang="all" data-i18n="filterAll">Alle</button>
+            <button class="drawer-pill" data-drawer-lang="de">🇩🇪 Deutsch</button>
+            <button class="drawer-pill" data-drawer-lang="hu">🇭🇺 Magyar</button>
+          </div>
+          <div id="player-live-list" class="player-live-list"></div>
+        </div>
+
+        <!-- Bottom Custom Controls Bar -->
+        <div class="player-controls-bar">
+          <!-- Timeline / Scrubber with Hover Tooltip -->
+          <div id="timeline-bar" class="timeline-bar">
+            <div id="timeline-buffer" class="timeline-buffer"></div>
+            <div id="timeline-progress" class="timeline-progress">
+              <div class="timeline-handle"></div>
+            </div>
+            <div id="timeline-tooltip" class="timeline-tooltip">00:00</div>
+          </div>
+
+          <div class="controls-row">
+            <!-- Left Controls: Play/Pause, Skips, Next Episode, Time -->
+            <div class="controls-group-left">
+              <button id="btn-play-pause" class="ctrl-btn" title="Play/Pause (Leertaste / K)">
+                <svg id="icon-play" viewBox="0 0 24 24"><polygon points="6 4 19 12 6 20 6 4" fill="currentColor"/></svg>
+                <svg id="icon-pause" viewBox="0 0 24 24" style="display: none;"><rect x="6" y="4" width="4" height="16" fill="currentColor"/><rect x="14" y="4" width="4" height="16" fill="currentColor"/></svg>
+              </button>
+
+              <button id="btn-skip-back" class="ctrl-btn" data-i18n-title="skipBack10" title="10s zurück (J)">
+                <svg viewBox="0 0 24 24"><path d="M12 5V1L7 6l5 5V7c3.31 0 6 2.69 6 6s-2.69 6-6 6-6-2.69-6-6H4c0 4.42 3.58 8 8 8s8-3.58 8-8-3.58-8-8-8z" fill="currentColor"/><text x="12" y="14" font-size="7" font-weight="bold" text-anchor="middle" fill="currentColor">10</text></svg>
+              </button>
+
+              <button id="btn-skip-fwd" class="ctrl-btn" data-i18n-title="skipFwd10" title="10s vor (L)">
+                <svg viewBox="0 0 24 24"><path d="M12 5V1l5 5-5 5V7c-3.31 0-6 2.69-6 6s2.69 6 6 6 6-2.69 6-6h2c0 4.42-3.58 8-8 8s-8-3.58-8-8 3.58-8 8-8z" fill="currentColor"/><text x="12" y="14" font-size="7" font-weight="bold" text-anchor="middle" fill="currentColor">10</text></svg>
+              </button>
+
+              <!-- Series Next Episode Button -->
+              <button id="btn-next-episode" class="ctrl-btn btn-next-ep" data-i18n-title="nextEpisode" title="Nächste Folge (N)" style="display: none;">
+                <svg viewBox="0 0 24 24"><polygon points="5 4 15 12 5 20 5 4" fill="currentColor"/><line x1="19" y1="5" x2="19" y2="19" stroke="currentColor" stroke-width="2.5"/></svg>
+                <span data-i18n="nextEpisode">Nächste Folge</span>
+              </button>
+
+              <div class="time-display">
+                <span id="current-time">00:00</span>
+                <span class="time-separator">/</span>
+                <span id="duration-time">00:00</span>
+              </div>
+            </div>
+
+            <!-- Right Controls: Zap Channels, Audio/Sub, Volume, Speed, Quality, PiP, Fullscreen -->
+            <div class="controls-group-right">
+              <!-- Live TV Channel Zapper Button -->
+              <button id="btn-zap-channels" class="ctrl-btn btn-zap" data-i18n-title="zapChannels" title="Sender wechseln" style="display: none;">
+                <svg viewBox="0 0 24 24"><rect x="2" y="7" width="20" height="15" rx="2" stroke="currentColor" stroke-width="2" fill="none"/><polyline points="17 2 12 7 7 2" stroke="currentColor" stroke-width="2" fill="none"/></svg>
+                <span data-i18n="zapChannels">Senderliste</span>
+              </button>
+
+              <!-- Audio & Subtitles Toggle Button -->
+              <button id="btn-audio-sub" class="ctrl-btn" data-i18n-title="audioAndSubtitles" title="Audio & Untertitel" style="display: none;">
+                <svg viewBox="0 0 24 24"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" stroke="currentColor" stroke-width="2" fill="none"/><line x1="8" y1="9" x2="16" y2="9" stroke="currentColor" stroke-width="2"/><line x1="8" y1="13" x2="13" y2="13" stroke="currentColor" stroke-width="2"/></svg>
+              </button>
+
+              <!-- Volume -->
+              <div class="volume-container">
+                <button id="btn-mute" class="ctrl-btn" title="Stummschalten (M)">
+                  <svg id="icon-vol-high" viewBox="0 0 24 24"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5" fill="currentColor"/><path d="M15.54 8.46a5 5 0 0 1 0 7.07M19.07 4.93a10 10 0 0 1 0 14.14" stroke="currentColor" stroke-width="2" fill="none"/></svg>
+                  <svg id="icon-vol-muted" viewBox="0 0 24 24" style="display: none;"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5" fill="currentColor"/><line x1="23" y1="9" x2="17" y2="15" stroke="currentColor" stroke-width="2"/><line x1="17" y1="9" x2="23" y2="15" stroke="currentColor" stroke-width="2"/></svg>
+                </button>
+                <input type="range" id="volume-slider" min="0" max="1" step="0.05" value="1">
+              </div>
+
+              <!-- Speed -->
+              <select id="speed-select" class="ctrl-select" title="Geschwindigkeit">
+                <option value="0.5">0.5x</option>
+                <option value="0.75">0.75x</option>
+                <option value="1" selected>1.0x</option>
+                <option value="1.25">1.25x</option>
+                <option value="1.5">1.5x</option>
+                <option value="2">2.0x</option>
+              </select>
+
+              <!-- HLS Quality -->
+              <select id="quality-select" class="ctrl-select" style="display: none;"></select>
+
+              <!-- PiP -->
+              <button id="btn-pip" class="ctrl-btn" title="Bild-in-Bild (P)">
+                <svg viewBox="0 0 24 24"><rect x="2" y="4" width="20" height="16" rx="2" stroke="currentColor" stroke-width="2" fill="none"/><rect x="12" y="10" width="8" height="6" fill="currentColor"/></svg>
+              </button>
+
+              <!-- Fullscreen -->
+              <button id="btn-fullscreen" class="ctrl-btn" title="Vollbild (F)">
+                <svg viewBox="0 0 24 24"><path d="M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3m0 18h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3" stroke="currentColor" stroke-width="2" fill="none"/></svg>
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </main>
+
+  </div>
+
+  <!-- PRIME-STYLE SERIES EPISODE BROWSER MODAL -->
+  <div id="series-modal" class="modal-overlay">
+    <div class="modal-card series-modal-card">
+      <div class="series-modal-header" id="series-modal-backdrop">
+        <button id="btn-series-modal-close" class="modal-close-btn">&times;</button>
+        <div class="series-header-info">
+          <span class="hero-badge prime-tag" data-i18n="typeSeries">Serie</span>
+          <h2 id="series-modal-title" class="series-modal-title">Pioneers of Space</h2>
+          <p id="series-modal-desc" class="series-modal-desc"></p>
+        </div>
+      </div>
+
+      <div class="series-season-bar">
+        <span class="season-badge" data-i18n="seasonSelect">Staffel 1</span>
+        <span id="series-modal-ep-count" class="ep-count-badge">3 Episoden</span>
+      </div>
+
+      <!-- Episodes List -->
+      <div id="series-episodes-list" class="series-episodes-list"></div>
+    </div>
+  </div>
+
+  <!-- SOURCE MANAGEMENT MODAL -->
+  <div id="source-modal" class="modal-overlay">
+    <div class="modal-card">
+      <div class="modal-header">
+        <div>
+          <h2 class="modal-title" data-i18n="modalTitle">Streaming-Quellen & Feeds</h2>
+          <p class="modal-subtitle" data-i18n="modalSubtitle">Verwalte Filme, Serien und Live TV...</p>
+        </div>
+        <button id="btn-modal-close" class="modal-close-btn">&times;</button>
+      </div>
+
+      <div class="modal-toolbar">
+        <button id="btn-add-source" class="btn btn-primary" data-i18n="addSourceBtn">+ Quelle hinzufügen</button>
+        <button id="btn-import-json" class="btn btn-secondary" data-i18n="importJsonBtn">JSON importieren</button>
+        <button id="btn-export-json" class="btn btn-secondary" data-i18n="exportJsonBtn">JSON exportieren</button>
+        <button id="btn-reset-defaults" class="btn btn-danger" data-i18n="resetDefaultsBtn">Standard wiederherstellen</button>
+      </div>
+
+      <!-- Add / Edit Form -->
+      <form id="source-edit-form" class="source-form" style="display: none;">
+        <div class="form-row">
+          <div class="form-group">
+            <label data-i18n="fieldTitleDe">Titel (Deutsch)</label>
+            <input type="text" id="form-title-de" required>
+          </div>
+          <div class="form-group">
+            <label data-i18n="fieldTitleHu">Titel (Ungarisch)</label>
+            <input type="text" id="form-title-hu">
+          </div>
+        </div>
+
+        <div class="form-row">
+          <div class="form-group flex-2">
+            <label data-i18n="fieldUrl">Stream-URL (m3u8 / mp4)</label>
+            <input type="url" id="form-url" placeholder="https://example.com/stream.m3u8" required>
+          </div>
+          <div class="form-group">
+            <label data-i18n="fieldType">Typ</label>
+            <select id="form-type">
+              <option value="movie">Film</option>
+              <option value="series">Serie</option>
+              <option value="livetv">Live TV</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label data-i18n="fieldFormat">Format</label>
+            <select id="form-format">
+              <option value="hls">HLS (.m3u8)</option>
+              <option value="mp4">MP4 Video</option>
+              <option value="webm">WebM</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label data-i18n="fieldCategory">Genre / Kategorie</label>
+            <select id="form-category">
+              <option value="movies">Filme / Filmek</option>
+              <option value="news">Nachrichten & Live / Hírek</option>
+              <option value="animation">Animation</option>
+              <option value="docs">Dokumentationen</option>
+              <option value="custom">Benutzerdefiniert</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label data-i18n="fieldLanguage">Sprache</label>
+            <select id="form-language">
+              <option value="de">Deutsch (DE)</option>
+              <option value="hu">Magyar (HU)</option>
+              <option value="multi">International (Multi)</option>
+            </select>
+          </div>
+          <div class="form-group checkbox-group">
+            <label>
+              <input type="checkbox" id="form-is-live">
+              <span data-i18n="fieldIsLive">Live-Stream</span>
+            </label>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label data-i18n="fieldPoster">Vorschaubild URL (optional)</label>
+          <input type="url" id="form-poster" placeholder="https://images.unsplash.com/...">
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label data-i18n="fieldDescDe">Beschreibung (DE)</label>
+            <textarea id="form-desc-de" rows="2"></textarea>
+          </div>
+          <div class="form-group">
+            <label data-i18n="fieldDescHu">Beschreibung (HU)</label>
+            <textarea id="form-desc-hu" rows="2"></textarea>
+          </div>
+        </div>
+
+        <div class="form-actions">
+          <button type="submit" class="btn btn-primary" data-i18n="saveSource">Speichern</button>
+          <button type="button" id="btn-cancel-edit" class="btn btn-secondary" data-i18n="cancel">Abbrechen</button>
+        </div>
+      </form>
+
+      <!-- Existing Sources List -->
+      <div id="modal-sources-list" class="modal-sources-list"></div>
+    </div>
+  </div>
+
+  <!-- ADDON & LIBRARIES MANAGEMENT MODAL -->
+  <div id="addon-modal" class="modal-overlay">
+    <div class="modal-card addon-modal-card">
+      <div class="modal-header">
+        <div>
+          <h2 class="modal-title" data-i18n="addonsModalTitle">Bibliotheken & Add-on Feeds</h2>
+          <p class="modal-subtitle" data-i18n="addonsModalSubtitle">Füge ganze Web-Seiten, M3U-Senderlisten oder Feeds mit nur einer einzigen URL hinzu.</p>
+        </div>
+        <button id="btn-addon-modal-close" class="modal-close-btn">&times;</button>
+      </div>
+
+      <!-- Addon Sub-Navigation Tabs -->
+      <div class="modal-tabs">
+        <button class="modal-tab-btn active" id="tab-btn-installed" data-i18n="tabInstalledAddons">Meine Bibliotheken</button>
+        <button class="modal-tab-btn" id="tab-btn-add" data-i18n="tabAddAddon">+ Neue Bibliothek / Add-on</button>
+        <button class="modal-tab-btn" id="tab-btn-store" data-i18n="tabAddonStore">Empfohlene Bibliotheken (1-Klick)</button>
+      </div>
+
+      <!-- TAB 1: INSTALLED ADDONS -->
+      <div id="tab-content-installed" class="modal-tab-content active">
+        <div class="addon-toolbar">
+          <button id="btn-sync-all-addons" class="btn btn-secondary">
+            <svg viewBox="0 0 24 24" class="btn-icon"><path d="M21.5 2v6h-6M21.34 15.57a10 10 0 1 1-.57-8.38l5.67-5.67" stroke="currentColor" stroke-width="2" fill="none"/></svg>
+            <span data-i18n="addonSyncBtn">Alle aktualisieren</span>
+          </button>
+          <span id="addons-status-summary" class="addon-summary-text">Lädt installierte Bibliotheken...</span>
+        </div>
+        <div id="installed-addons-list" class="addons-grid"></div>
+      </div>
+
+      <!-- TAB 2: ADD NEW ADDON FORM -->
+      <div id="tab-content-add" class="modal-tab-content">
+        <form id="addon-create-form" class="source-form">
+          <div class="form-row">
+            <div class="form-group flex-2">
+              <label data-i18n="addonName">Name der Bibliothek</label>
+              <input type="text" id="addon-input-name" data-i18n-placeholder="addonNamePlaceholder" placeholder="z.B. ARD & ZDF Mediathek oder Magyar TV" required>
+            </div>
+            <div class="form-group">
+              <label data-i18n="addonType">Typ</label>
+              <select id="addon-input-type">
+                <option value="m3u" data-i18n="addonTypeM3U">M3U / IPTV Playlist (Ganze Senderliste)</option>
+                <option value="json_feed" data-i18n="addonTypeJson">Remote JSON Catalog / Web-Feed</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="form-row">
+            <div class="form-group flex-2">
+              <label data-i18n="addonUrl">Feed- oder Playlist-URL</label>
+              <input type="url" id="addon-input-url" data-i18n-placeholder="addonUrlPlaceholder" placeholder="https://.../playlist.m3u oder feed.json" required>
+              <small class="form-hint">Einfach die URL einer M3U-Senderliste oder eines JSON-Katalogs einfügen. Die App liest alle Titel automatisch ein!</small>
+            </div>
+            <div class="form-group">
+              <label data-i18n="addonLanguage">Hauptsprache</label>
+              <select id="addon-input-lang">
+                <option value="de">Deutsch (DE)</option>
+                <option value="hu">Magyar (HU)</option>
+                <option value="multi">International (Multi)</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="form-actions">
+            <button type="submit" id="btn-submit-addon" class="btn btn-primary" data-i18n="addonSaveBtn">Bibliothek laden & aktivieren</button>
+            <button type="button" id="btn-cancel-addon" class="btn btn-secondary" data-i18n="cancel">Abbrechen</button>
+          </div>
+        </form>
+      </div>
+
+      <!-- TAB 3: RECOMMENDED ADDONS STORE -->
+      <div id="tab-content-store" class="modal-tab-content">
+        <div id="recommended-addons-list" class="addons-store-grid"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- EPG TV-PROGRAMM GUIDE MODAL -->
+  <div id="epg-modal" class="modal-overlay">
+    <div class="modal-card epg-modal-card">
+      <div class="modal-header">
+        <div>
+          <h2 class="modal-title" data-i18n="tvGuide">TV-Programm (EPG)</h2>
+          <p class="modal-subtitle" data-i18n="tvGuideSubtitle">Aktuelles Live-Programm und Sendeplan aller Kanäle.</p>
+        </div>
+        <button id="btn-epg-modal-close" class="modal-close-btn">&times;</button>
+      </div>
+
+      <!-- Language Filter Tabs for EPG -->
+      <div class="modal-tabs">
+        <button class="modal-tab-btn active" id="epg-tab-de" data-i18n="channelsGerman">🇩🇪 Deutsche TV-Sender</button>
+        <button class="modal-tab-btn" id="epg-tab-hu" data-i18n="channelsHungarian">🇭🇺 Magyar TV-csatornák</button>
+        <button class="modal-tab-btn" id="epg-tab-all" data-i18n="showAllChannels">Alle Sender</button>
+      </div>
+
+      <div class="epg-scroll-area">
+        <div id="epg-channels-timeline-list" class="epg-timeline-list"></div>
+      </div>
+    </div>
+  </div>
+
+  <script src="i18n.js"></script>
+  <script src="epg.js"></script>
+  <script src="addons.js"></script>
+  <script src="player.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>

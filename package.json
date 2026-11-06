@@ -1,0 +1,24 @@
+{
+  "name": "stream-nexus",
+  "version": "1.0.0",
+  "description": "Modularer Desktop Media Player für legale Open-Source & Public Domain Streams",
+  "main": "main.js",
+  "scripts": {
+    "start": "electron ."
+  },
+  "keywords": [
+    "player",
+    "streaming",
+    "hls",
+    "media-player",
+    "video"
+  ],
+  "author": "",
+  "license": "MIT",
+  "dependencies": {
+    "hls.js": "^1.6.15"
+  },
+  "devDependencies": {
+    "electron": "^41.0.0"
+  }
+}
