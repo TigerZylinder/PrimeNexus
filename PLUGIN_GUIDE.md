@@ -284,7 +284,7 @@ dotnet restore
 dotnet run
 ```
 
-Die Bridge lauscht nur auf `127.0.0.1:4317`. Danach kann in PrimeNexus unter **Bibliotheken & Add-ons → Neue Bibliothek / Add-on** ein JSON-Feed mit folgender URL angelegt werden:
+Die Bridge lauscht nur auf `127.0.0.1:4317`. Danach kann in PrimeNexus unter **Bibliotheken & Add-ons → Neue Bibliothek / Add-on** der Add-on-Typ **SerienStreamAPI – Serien-Metadaten (lokale Bridge)** gewählt werden. Titel und Katalogtyp werden im Formular eingetragen; PrimeNexus erstellt die lokale Feed-URL automatisch. Alternativ kann der JSON-Feed direkt mit folgender URL angelegt werden:
 
 ```
 http://127.0.0.1:4317/catalog?title=My%20Series&site=serie
