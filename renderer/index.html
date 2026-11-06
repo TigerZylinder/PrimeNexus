@@ -518,12 +518,13 @@
               <select id="addon-input-type">
                 <option value="m3u" data-i18n="addonTypeM3U">M3U / IPTV Playlist (Ganze Senderliste)</option>
                 <option value="json_feed" data-i18n="addonTypeJson">Remote JSON Catalog / Web-Feed</option>
+                <option value="serienstream_metadata">SerienStreamAPI – Serien-Metadaten (lokale Bridge)</option>
               </select>
             </div>
           </div>
 
           <div class="form-row">
-            <div class="form-group flex-2">
+            <div class="form-group flex-2" id="addon-url-field">
               <label data-i18n="addonUrl">Feed- oder Playlist-URL</label>
               <input type="url" id="addon-input-url" data-i18n-placeholder="addonUrlPlaceholder" placeholder="https://.../playlist.m3u oder feed.json" required>
               <small class="form-hint">Einfach die URL einer M3U-Senderliste oder eines JSON-Katalogs einfügen. Die App liest alle Titel automatisch ein!</small>
@@ -535,6 +536,18 @@
                 <option value="hu">Magyar (HU)</option>
                 <option value="multi">International (Multi)</option>
               </select>
+            </div>
+          </div>
+
+          <div class="form-row" id="serienstream-addon-fields" style="display: none;">
+            <div class="form-group flex-2">
+              <label for="addon-input-series-title">Serientitel auf der Quelle</label>
+              <input type="text" id="addon-input-series-title" placeholder="z. B. My Series">
+              <small class="form-hint">Die lokale .NET-Bridge muss laufen (127.0.0.1:4317). Es werden nur Katalog-Metadaten geladen.</small>
+            </div>
+            <div class="form-group">
+              <label for="addon-input-series-site">Katalogtyp</label>
+              <select id="addon-input-series-site"><option value="serie">Serie</option><option value="anime">Anime</option></select>
             </div>
           </div>
 
