@@ -270,3 +270,26 @@ sequenceDiagram
 - [ ] **CORS-Unabhängigkeit**: Nutze `window.electronAPI.fetchRemote()`, um Web-Feeds ohne Browser-CORS-Sperren abzufragen.
 - [ ] **Robuste Thumbnails**: Falls ein Vorschaubild offline geht, fängt `onerror` im Template das Bild automatisch mit einem Fallback ab.
 - [ ] **Legale Quellen**: Binde ausschließlich autorisierte, frei zugängliche Medien (wie Mediatheken, Public-Domain-Archive oder freie Web-Streams) ein.
+
+
+## 9. SerienStream-Metadaten-Bridge (lokal)
+
+Für die C#-Bibliothek [IcySnex/SerienStreamAPI](https://github.com/IcySnex/SerienStreamAPI) liegt unter `tools/SerienStreamBridge` eine lokale .NET-8-Bridge. Sie stellt Serien-Stammdaten und Episodentitel als JSON bereit, das der vorhandene `json_feed`-Parser lesen kann.
+
+### Start
+
+```bash
+cd tools/SerienStreamBridge
+dotnet restore
+dotnet run
+```
+
+Die Bridge lauscht nur auf `127.0.0.1:4317`. Danach kann in PrimeNexus unter **Bibliotheken & Add-ons → Neue Bibliothek / Add-on** ein JSON-Feed mit folgender URL angelegt werden:
+
+```
+http://127.0.0.1:4317/catalog?title=My%20Series&site=serie
+```
+
+Für Anime wird `site=anime` verwendet. Der genaue Titel muss auf der ausgewählten Website auffindbar sein. Mehrere Serien können als mehrere Add-ons angelegt werden.
+
+**Wiedergabe:** Die Bridge liefert bewusst nur Metadaten. Episoden ohne direkte, autorisierte Medien-URL werden in der Serienansicht als **Nur Metadaten** angezeigt und sind nicht anklickbar. Die Bridge ruft keine Video-Hoster-Resolver auf.
