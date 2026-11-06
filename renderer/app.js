@@ -912,36 +912,18 @@ function setupAddonManagerModal() {
     if (textSpan) textSpan.textContent = originalText;
   });
 
-  const addonTypeSelect = document.getElementById('addon-input-type');
-  const addonUrlField = document.getElementById('addon-url-field');
-  const seriesMetadataFields = document.getElementById('serienstream-addon-fields');
-  const seriesTitleInput = document.getElementById('addon-input-series-title');
-  const seriesSiteSelect = document.getElementById('addon-input-series-site');
-
-  function updateAddonTypeFields() {
-    const isSeriesMetadata = addonTypeSelect.value === 'serienstream_metadata';
-    addonUrlField.style.display = isSeriesMetadata ? 'none' : '';
-    seriesMetadataFields.style.display = isSeriesMetadata ? 'flex' : 'none';
-    document.getElementById('addon-input-url').required = !isSeriesMetadata;
-    seriesTitleInput.required = isSeriesMetadata;
-  }
-  addonTypeSelect.addEventListener('change', updateAddonTypeFields);
-  updateAddonTypeFields();
-
   addonForm.addEventListener('submit', async (e) => {
     e.preventDefault();
     const name = document.getElementById('addon-input-name').value;
     const url = document.getElementById('addon-input-url').value;
-    const type = addonTypeSelect.value;
+    const type = document.getElementById('addon-input-type').value;
     const language = document.getElementById('addon-input-lang').value;
-    const seriesTitle = seriesTitleInput.value;
-    const site = seriesSiteSelect.value;
     const submitBtn = document.getElementById('btn-submit-addon');
 
     submitBtn.disabled = true;
     submitBtn.textContent = getTranslation('addonSyncing');
 
-    const res = await window.addonManager.addCustomAddon({ name, url, type, language, seriesTitle, site });
+    const res = await window.addonManager.addCustomAddon({ name, url, type, language });
     submitBtn.disabled = false;
     submitBtn.textContent = getTranslation('addonSaveBtn');
 
