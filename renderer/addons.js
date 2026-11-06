@@ -96,19 +96,26 @@ class AddonManager {
     return await this.syncAddon(newAddon.id);
   }
 
-  async addCustomAddon({ name, url, type, language }) {
+  async addCustomAddon({ name, url, type, language, seriesTitle, site }) {
     const id = 'addon-custom-' + Date.now();
+    const isSeriesMetadataAddon = type === 'serienstream_metadata';
+    const safeSite = site === 'anime' ? 'anime' : 'serie';
+    const addonUrl = isSeriesMetadataAddon
+      ? 'http://127.0.0.1:4317/catalog?title=' + encodeURIComponent(String(seriesTitle || '').trim()) + '&site=' + safeSite
+      : url.trim();
     const newAddon = {
       id,
       name: name.trim(),
-      url: url.trim(),
-      type: type || 'm3u',
+      url: addonUrl,
+      type: isSeriesMetadataAddon ? 'json_feed' : (type || 'm3u'),
+      provider: isSeriesMetadataAddon ? 'serienstream_metadata' : undefined,
+      description: isSeriesMetadataAddon ? 'Serien- und Episoden-Metadaten über die lokale .NET-Bridge.' : '',
       language: language || 'multi',
-      category: 'news',
+      category: isSeriesMetadataAddon ? 'series' : 'news',
       enabled: true,
       lastSync: null,
       itemCount: 0,
-      author: 'Custom Library'
+      author: isSeriesMetadataAddon ? 'PrimeNexus SerienStream Bridge' : 'Custom Library'
     };
     this.addons.push(newAddon);
     await this.saveAddons();
@@ -303,36 +310,90 @@ class AddonManager {
     try {
       const data = JSON.parse(text);
       let list = [];
-      if (Array.isArray(data)) {
-        list = data;
-      } else if (Array.isArray(data.items)) {
-        list = data.items;
-      } else if (Array.isArray(data.streams)) {
-        list = data.streams;
-      } else if (Array.isArray(data.channels)) {
-        list = data.channels;
-      }
 
-      return list.map((item, idx) => ({
-        id: `addon-${addon.id}-${item.id || idx}`,
-        addonId: addon.id,
-        addonName: addon.name,
-        type: item.type || (item.isLive ? 'livetv' : 'movie'),
-        title_de: item.title_de || item.title || item.name || 'Unbenannt',
-        title_hu: item.title_hu || item.title || item.name || 'Névtelen',
-        description_de: item.description_de || item.description || addon.name,
-        description_hu: item.description_hu || item.description || addon.name,
-        category: item.category || 'movies',
-        language: item.language || addon.language || 'multi',
-        rating: item.rating || (item.isLive ? 'LIVE' : '8.0'),
-        year: item.year || '2024',
-        duration: item.duration || (item.isLive ? undefined : '1 Std.'),
-        streamUrl: item.streamUrl || item.url || '',
-        format: (item.format || (item.streamUrl && item.streamUrl.includes('.m3u8') ? 'hls' : 'mp4')),
-        isLive: item.isLive || false,
-        poster: item.poster || item.logo || item.image || this.getFallbackLogo(item.category),
-        episodes: item.episodes || undefined
-      }));
+      if (Array.isArray(data)) list = data;
+      else if (Array.isArray(data.items)) list = data.items;
+      else if (Array.isArray(data.series)) list = data.series;
+      else if (Array.isArray(data.results)) list = data.results;
+      else if (Array.isArray(data.streams)) list = data.streams;
+      else if (Array.isArray(data.channels)) list = data.channels;
+
+      const isHttpUrl = value => typeof value === 'string' && /^https?:\/\/\S+$/i.test(value.trim());
+      const normalizeFormat = (format, url) => {
+        const value = String(format || '').toLowerCase();
+        if (value === 'hls' || value === 'm3u8' || /\.m3u8(?:$|[?#])/i.test(url || '')) return 'hls';
+        if (value === 'webm' || /\.webm(?:$|[?#])/i.test(url || '')) return 'webm';
+        return 'mp4';
+      };
+      const normalizeEpisode = (episode, series, index, seasonNumber) => {
+        const rawUrl = episode.streamUrl || episode.playbackUrl || episode.videoUrl || episode.url || '';
+        const streamUrl = isHttpUrl(rawUrl) ? rawUrl.trim() : '';
+        const backupUrls = Array.isArray(episode.backupUrls)
+          ? episode.backupUrls.filter(isHttpUrl).map(url => url.trim())
+          : [];
+
+        return {
+          id: String(episode.id || (series.id || 'series') + '-s' + (episode.season || seasonNumber || 1) + 'e' + (episode.episode || index + 1)),
+          season: Number(episode.season || seasonNumber || 1),
+          episode: Number(episode.episode || episode.episodeNumber || index + 1),
+          title_de: episode.title_de || episode.titleGerman || episode.title || episode.name || 'Episode ' + (index + 1),
+          title_hu: episode.title_hu || episode.titleHungarian || episode.title || episode.name || 'Epizód ' + (index + 1),
+          description_de: episode.description_de || episode.descriptionGerman || episode.description || '',
+          description_hu: episode.description_hu || episode.descriptionHungarian || episode.description || '',
+          duration: episode.duration || '',
+          poster: isHttpUrl(episode.poster) ? episode.poster : (isHttpUrl(episode.thumbnail) ? episode.thumbnail : ''),
+          streamUrl,
+          backupUrls,
+          format: normalizeFormat(episode.format, streamUrl)
+        };
+      };
+
+      return list.filter(item => item && typeof item === 'object').map((item, idx) => {
+        const rawType = String(item.type || '').toLowerCase();
+        const isSeries = ['series', 'show', 'tvshow', 'tv_show', 'anime'].includes(rawType)
+          || Array.isArray(item.episodes)
+          || Array.isArray(item.seasons);
+        const isLive = !!item.isLive || rawType === 'livetv' || rawType === 'live';
+        const type = isLive ? 'livetv' : (isSeries ? 'series' : 'movie');
+        const rawStreamUrl = item.streamUrl || item.playbackUrl || item.videoUrl || item.url || '';
+        const streamUrl = isHttpUrl(rawStreamUrl) ? rawStreamUrl.trim() : '';
+
+        let rawEpisodes = Array.isArray(item.episodes) ? item.episodes : [];
+        if (!rawEpisodes.length && Array.isArray(item.seasons)) {
+          rawEpisodes = item.seasons.flatMap((season, seasonIndex) =>
+            (Array.isArray(season.episodes) ? season.episodes : []).map(episode => ({
+              ...episode,
+              season: episode.season || season.number || season.seasonNumber || seasonIndex + 1
+            }))
+          );
+        }
+
+        const normalizedSeries = rawEpisodes.map((episode, episodeIndex) =>
+          normalizeEpisode(episode, item, episodeIndex, episode.season)
+        );
+
+        return {
+          id: 'addon-' + addon.id + '-' + (item.id || idx),
+          addonId: addon.id,
+          addonName: addon.name,
+          type,
+          title_de: item.title_de || item.titleGerman || item.title || item.name || 'Unbenannt',
+          title_hu: item.title_hu || item.titleHungarian || item.title || item.name || 'Névtelen',
+          description_de: item.description_de || item.descriptionGerman || item.description || addon.name,
+          description_hu: item.description_hu || item.descriptionHungarian || item.description || addon.name,
+          category: item.category || (isSeries ? 'series' : 'movies'),
+          language: item.language || addon.language || 'multi',
+          rating: item.rating || (isLive ? 'LIVE' : '8.0'),
+          year: item.year || item.releaseYear || '',
+          duration: item.duration || (isLive ? undefined : ''),
+          streamUrl,
+          backupUrls: Array.isArray(item.backupUrls) ? item.backupUrls.filter(isHttpUrl).map(url => url.trim()) : [],
+          format: normalizeFormat(item.format, streamUrl),
+          isLive,
+          poster: isHttpUrl(item.poster) ? item.poster : (isHttpUrl(item.logo) ? item.logo : (isHttpUrl(item.image) ? item.image : '')),
+          episodes: isSeries ? normalizedSeries : undefined
+        };
+      });
     } catch (e) {
       console.error('Failed to parse JSON feed:', e);
       return [];

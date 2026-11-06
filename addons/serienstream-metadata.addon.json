@@ -1,0 +1,11 @@
+{
+  "id": "addon-serienstream-metadata",
+  "name": "SerienStream Metadaten-Addon (lokale Bridge)",
+  "description": "Lädt Serienbeschreibungen, Staffeln und Episodentitel über die lokale .NET-Bridge. Keine Video-Hoster-Auflösung.",
+  "type": "json_feed",
+  "provider": "serienstream_metadata",
+  "language": "de",
+  "enabled": false,
+  "url": "http://127.0.0.1:4317/catalog?title=My%20Series&site=serie",
+  "setupGuide": "tools/SerienStreamBridge/README.md"
+}

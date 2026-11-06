@@ -544,6 +544,7 @@ function openSeriesModal(series) {
     const epTitle = currentLang === 'hu' ? (ep.title_hu || ep.title_de) : (ep.title_de || ep.title_hu);
     const epDesc = currentLang === 'hu' ? (ep.description_hu || ep.description_de) : (ep.description_de || ep.description_hu);
     const epThumb = ep.poster || poster;
+    const hasPlayback = typeof ep.streamUrl === 'string' && /^https?:\/\//i.test(ep.streamUrl);
 
     epRow.innerHTML = `
       <div class="ep-thumb-box">
@@ -555,16 +556,30 @@ function openSeriesModal(series) {
       <div class="ep-info-box">
         <div class="ep-header">
           <span class="ep-title">${epTitle}</span>
-          <span class="ep-duration">${ep.duration || '12 Min.'}</span>
+          <span class="ep-duration">${ep.duration || ''}</span>
         </div>
         <p class="ep-desc">${epDesc || ''}</p>
       </div>
     `;
 
-    epRow.addEventListener('click', () => {
-      closeSeriesModal();
-      startPlaybackSeriesEpisode(series, index);
-    });
+    if (hasPlayback) {
+      epRow.addEventListener('click', () => {
+        closeSeriesModal();
+        startPlaybackSeriesEpisode(series, index);
+      });
+    } else {
+      epRow.classList.add('metadata-only');
+      const playIcon = epRow.querySelector('.ep-play-icon');
+      if (playIcon) playIcon.style.display = 'none';
+      const status = document.createElement('span');
+      status.className = 'ep-metadata-label';
+      status.textContent = currentLang === 'hu' ? 'Csak metaadatok' : 'Nur Metadaten';
+      epRow.querySelector('.ep-header').appendChild(status);
+      epRow.setAttribute('aria-disabled', 'true');
+      epRow.title = currentLang === 'hu'
+        ? 'Ehhez az epizódhoz nincs lejátszási forrás.'
+        : 'Für diese Episode ist keine Wiedergabequelle hinterlegt.';
+    }
 
     seriesEpisodesList.appendChild(epRow);
   });
@@ -897,23 +912,42 @@ function setupAddonManagerModal() {
     if (textSpan) textSpan.textContent = originalText;
   });
 
+  const addonTypeSelect = document.getElementById('addon-input-type');
+  const addonUrlField = document.getElementById('addon-url-field');
+  const seriesMetadataFields = document.getElementById('serienstream-addon-fields');
+  const seriesTitleInput = document.getElementById('addon-input-series-title');
+  const seriesSiteSelect = document.getElementById('addon-input-series-site');
+
+  function updateAddonTypeFields() {
+    const isSeriesMetadata = addonTypeSelect.value === 'serienstream_metadata';
+    addonUrlField.style.display = isSeriesMetadata ? 'none' : '';
+    seriesMetadataFields.style.display = isSeriesMetadata ? 'flex' : 'none';
+    document.getElementById('addon-input-url').required = !isSeriesMetadata;
+    seriesTitleInput.required = isSeriesMetadata;
+  }
+  addonTypeSelect.addEventListener('change', updateAddonTypeFields);
+  updateAddonTypeFields();
+
   addonForm.addEventListener('submit', async (e) => {
     e.preventDefault();
     const name = document.getElementById('addon-input-name').value;
     const url = document.getElementById('addon-input-url').value;
-    const type = document.getElementById('addon-input-type').value;
+    const type = addonTypeSelect.value;
     const language = document.getElementById('addon-input-lang').value;
+    const seriesTitle = seriesTitleInput.value;
+    const site = seriesSiteSelect.value;
     const submitBtn = document.getElementById('btn-submit-addon');
 
     submitBtn.disabled = true;
     submitBtn.textContent = getTranslation('addonSyncing');
 
-    const res = await window.addonManager.addCustomAddon({ name, url, type, language });
+    const res = await window.addonManager.addCustomAddon({ name, url, type, language, seriesTitle, site });
     submitBtn.disabled = false;
     submitBtn.textContent = getTranslation('addonSaveBtn');
 
     if (res.success) {
       addonForm.reset();
+      updateAddonTypeFields();
       rebuildMergedSources();
       switchTab('installed');
     } else {
@@ -924,6 +958,7 @@ function setupAddonManagerModal() {
   if (btnCancelAddon) {
     btnCancelAddon.addEventListener('click', () => {
       addonForm.reset();
+      updateAddonTypeFields();
       switchTab('installed');
     });
   }
