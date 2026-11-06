@@ -38,20 +38,11 @@ http://127.0.0.1:4317/health
 1. Starte die Bridge.
 2. Öffne in PrimeNexus **Bibliotheken & Add-ons** → **Neue Bibliothek / Add-on**.
 3. Name: zum Beispiel `Serien-Metadaten – My Series`.
-4. Typ: **Remote JSON Catalog / Web-Feed**.
-5. URL für eine Serie:
-
-```
-http://127.0.0.1:4317/catalog?title=My%20Series&site=serie
-```
-
-Für Anime:
-
-```
-http://127.0.0.1:4317/catalog?title=My%20Dress-Up%20Darling&site=anime
-```
-
+4. Typ: **SerienStreamAPI – Serien-Metadaten (lokale Bridge)**.
+5. Gib den Serientitel ein und wähle **Serie** oder **Anime**.
 6. Sprache: Deutsch. Klicke auf **Bibliothek laden & aktivieren**.
+
+PrimeNexus erzeugt daraus automatisch die passende lokale URL, zum Beispiel `http://127.0.0.1:4317/catalog?title=My%20Series&site=serie`.
 
 Der Titel muss so geschrieben sein, dass ihn die zugrunde liegende SerienStreamAPI auf der ausgewählten Website findet. Leerzeichen und Sonderzeichen müssen URL-kodiert sein.
 
