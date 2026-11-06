@@ -947,6 +947,7 @@ function setupAddonManagerModal() {
 
     if (res.success) {
       addonForm.reset();
+      updateAddonTypeFields();
       rebuildMergedSources();
       switchTab('installed');
     } else {
@@ -957,6 +958,7 @@ function setupAddonManagerModal() {
   if (btnCancelAddon) {
     btnCancelAddon.addEventListener('click', () => {
       addonForm.reset();
+      updateAddonTypeFields();
       switchTab('installed');
     });
   }
