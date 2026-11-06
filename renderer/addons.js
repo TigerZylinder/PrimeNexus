@@ -96,26 +96,19 @@ class AddonManager {
     return await this.syncAddon(newAddon.id);
   }
 
-  async addCustomAddon({ name, url, type, language, seriesTitle, site }) {
+  async addCustomAddon({ name, url, type, language }) {
     const id = 'addon-custom-' + Date.now();
-    const isSeriesMetadataAddon = type === 'serienstream_metadata';
-    const safeSite = site === 'anime' ? 'anime' : 'serie';
-    const addonUrl = isSeriesMetadataAddon
-      ? 'http://127.0.0.1:4317/catalog?title=' + encodeURIComponent(String(seriesTitle || '').trim()) + '&site=' + safeSite
-      : url.trim();
     const newAddon = {
       id,
       name: name.trim(),
-      url: addonUrl,
-      type: isSeriesMetadataAddon ? 'json_feed' : (type || 'm3u'),
-      provider: isSeriesMetadataAddon ? 'serienstream_metadata' : undefined,
-      description: isSeriesMetadataAddon ? 'Serien- und Episoden-Metadaten über die lokale .NET-Bridge.' : '',
+      url: url.trim(),
+      type: type || 'm3u',
       language: language || 'multi',
-      category: isSeriesMetadataAddon ? 'series' : 'news',
+      category: 'news',
       enabled: true,
       lastSync: null,
       itemCount: 0,
-      author: isSeriesMetadataAddon ? 'PrimeNexus SerienStream Bridge' : 'Custom Library'
+      author: 'Custom Library'
     };
     this.addons.push(newAddon);
     await this.saveAddons();
